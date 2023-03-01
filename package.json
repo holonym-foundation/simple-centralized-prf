@@ -17,6 +17,12 @@
   },
   "homepage": "https://github.com/holonym-foundation/simple-centralized-prf#readme",
   "dependencies": {
-    "dotenv": "^16.0.3"
+    "body-parser": "^1.20.2",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "chai": "^4.3.7",
+    "supertest": "^6.3.3"
   }
 }
