@@ -40,8 +40,18 @@ const _verify = async (pubkey, sig) => {
 
 app.post('/', async (req, res) => {
     res.setTimeout(1500);
-    console.log("body", req.body)
-  res.send(await authorizedPRF(req.body.pubkey, req.body.sig));
+    
+    res.send(await authorizedPRF(req.body.pubkey, req.body.sig));
+})
+
+app.post('/authority', async (req, res) => {
+    res.setTimeout(1500);
+
+    if(req.body.API_KEY == process.env.API_KEY) {
+        return prf(req.body.input); 
+    } else {
+        res.status(401);
+    }
 })
 
 app.listen(port, () => {})
