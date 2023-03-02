@@ -1,8 +1,9 @@
-const { expect, should } = require("chai");
+const { expect, assert } = require("chai");
 const {  createHmac } = require('crypto');
 const request = require("supertest");
 const { server, msg } = require("./index");
 const ed = require('@noble/ed25519');
+const { rejects } = require("assert");
 
 describe("PRF Server", function() {
     before(async function() {
@@ -25,6 +26,20 @@ describe("PRF Server", function() {
         const hmac = createHmac('sha256', process.env.HMAC_PRF_SECRET); hmac.update(Buffer.from(pubKey).toString("hex")); 
         const shouldBe = hmac.digest('hex');
         expect(r.text).to.eq(shouldBe);
+    });
+
+    it("incorrect signature fails", async function(){
+        const privKey = ed.utils.randomPrivateKey();
+        const pubKey = await ed.getPublicKey(privKey);
+    
+        const sig = await ed.sign(Buffer.from(msg), privKey);
+
+        const r = request(server).post('/').send({
+            pubkey: Buffer.from(pubKey).toString('hex').replace('5','6'),
+            sig: Buffer.from(sig).toString('hex')
+        });
+
+       await rejects(r);
     });
 
 
