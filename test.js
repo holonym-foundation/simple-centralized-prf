@@ -1,7 +1,7 @@
 const { expect, assert } = require("chai");
 const { createHmac } = require('crypto');
 const request = require("supertest");
-const { server, msg } = require("./index");
+const { server, msg, MAX_MSG } = require("./index");
 const ed = require('@noble/ed25519');
 const { rejects } = require("assert");
 
@@ -14,7 +14,7 @@ describe("PRF Server", function() {
         // Simulate the PRF
         const hmac = createHmac('sha512', process.env.HOLONYM_SECRET_HMAC); 
         hmac.update(Buffer.from(this.pubKey).toString("hex")); 
-        this.shouldBe = (BigInt('0x'+hmac.digest('hex')) % 2736030358979909402780800718157159386076813972158567259200215660948447373041n).toString();
+        this.shouldBe = (BigInt('0x'+hmac.digest('hex')) % MAX_MSG).toString();
     });
     after(async function(){
         // process.exit(0);

@@ -10,12 +10,13 @@ const app = express();
 app.use(bodyParser.json());
 const port = 3000;
 const msg = 'DO NOT SIGN THIS UNLESS YOU ARE ON https://holonym.id';
-const subgroupOrder = 2736030358979909402780800718157159386076813972158567259200215660948447373041n
+const SUBGROUP_ORDER = 2736030358979909402780800718157159386076813972158567259200215660948447373041n;
+const MAX_MSG = SUBGROUP_ORDER >> 10n; //Use 10 bits for Koblitz encoding
 
 const _prf = input => {
     const hmac = createHmac('sha512', process.env.HOLONYM_SECRET_HMAC);
     hmac.update(input); 
-    return (BigInt('0x'+hmac.digest('hex')) % subgroupOrder).toString();
+    return (BigInt('0x'+hmac.digest('hex')) % MAX_MSG).toString();
 }
 
 // Signs the ephemeral "pubkey" given as prfSeed, and signature is used as easy-to-code proof of discrete log
@@ -59,5 +60,6 @@ app.post('/authority', async (req, res) => {
 app.listen(port, () => {})
 module.exports = {
     server: app,
-    msg: msg
+    msg: msg,
+    MAX_MSG: MAX_MSG, 
 }
