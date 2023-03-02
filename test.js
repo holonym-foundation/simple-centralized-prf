@@ -25,7 +25,7 @@ describe("PRF Server", function() {
             sig: Buffer.from(this.sig).toString('hex')
         });
 
-        expect(r.body.p).to.eq(this.shouldBe);
+        expect(r.body.prf).to.eq(this.shouldBe);
     });
 
     it("incorrect signature fails", async function(){

@@ -3,7 +3,7 @@ const ed = require('@noble/ed25519');
 const express = require('express');
 const bodyParser = require('body-parser');
 const { sign } = require('holonym-wasm-issuer');
-
+const { poseidon } = require('circomlibjs-old'); //The new version gives wrong outputs of Poseidon hash that disagree with ZoKrates and are too big for the max scalar in the field
 require('dotenv').config();
 
 const app = express();
@@ -22,12 +22,15 @@ const _prf = input => {
 const authorizedPRF = async (pubkey, sig) => {
     if(await _verify(pubkey,sig)) {
         let p = _prf(pubkey);
+        const commit = poseidon([BigInt('0x'+pubkey).toString(), p]);
         return {
-            p: p,
-            sig: sign(process.env.HOLONYM_SECRET_EDDSA, p)
+            prfSeed: pubkey,
+            prf: p,
+            boundToSeed: commit.toString(),
+            sig: sign(process.env.HOLONYM_SECRET_EDDSA, commit.toString())
         }
     } else {
-        throw 'Error verifying knowledge of discrete log (in this case, via ECDSA signature)';
+        throw 'Error verifying knowledge of discrete log (in this case, via EdDSA signature)';
     }
 }
 

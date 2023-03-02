@@ -18,10 +18,12 @@
   "homepage": "https://github.com/holonym-foundation/simple-centralized-prf#readme",
   "dependencies": {
     "@noble/ed25519": "^1.7.3",
+    "big-integer": "^1.6.51",
     "body-parser": "^1.20.2",
+    "circomlibjs-old": "npm:circomlibjs@^0.0.8",
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
-    "holonym-wasm-issuer": "^0.3.0"
+    "holonym-wasm-issuer": "^0.3.1"
   },
   "devDependencies": {
     "chai": "^4.3.7",
