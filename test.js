@@ -9,7 +9,7 @@ describe("PRF Server", function() {
     before(async function() {
     });
     after(async function(){
-        // process.exit(0);
+        process.exit(0);
     })
     it("correct signature returns prf", async function(){
         const privKey = ed.utils.randomPrivateKey();
@@ -23,9 +23,9 @@ describe("PRF Server", function() {
         });
 
         // Simulate the PRF
-        const hmac = createHmac('sha256', process.env.HMAC_PRF_SECRET); hmac.update(Buffer.from(pubKey).toString("hex")); 
-        const shouldBe = hmac.digest('hex');
-        expect(r.text).to.eq(shouldBe);
+        const hmac = createHmac('sha512', process.env.HOLONYM_SECRET_HMAC); hmac.update(Buffer.from(pubKey).toString("hex")); 
+        const shouldBe = (BigInt('0x'+hmac.digest('hex')) % 2736030358979909402780800718157159386076813972158567259200215660948447373041n).toString();
+        expect(r.body.p).to.eq(shouldBe);
     });
 
     it("incorrect signature fails", async function(){
