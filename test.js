@@ -38,12 +38,20 @@ describe("PRF Server", function() {
     });
 
     it("Authority can get PRF of any seed", async function(){
+        const r = await request(server).post('/authority').send({
+            input: Buffer.from(this.pubKey).toString('hex'),
+            API_KEY: process.env.API_KEY
+        });
+        
+        expect(r.text).to.eq(this.shouldBe);
+    });
+
+    it("Authority route doesn't work with bad API key", async function(){
         const r = request(server).post('/authority').send({
             pubkey: Buffer.from(this.pubKey).toString('hex'),
             sig: Buffer.from(this.sig).toString('hex')
         });
         await rejects(r);
-        // expect(r.text).to.eq(this.shouldBe);
     });
 
 
