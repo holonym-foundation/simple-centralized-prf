@@ -24,7 +24,7 @@ describe("PRF Server", function() {
         // Simulate the PRF
         const hmac = createHmac('sha256', process.env.HMAC_PRF_SECRET); hmac.update(Buffer.from(pubKey).toString("hex")); 
         const shouldBe = hmac.digest('hex');
-        expect(r.text).to.eq(shouldBe)
+        expect(r.text).to.eq(shouldBe);
     });
 
 
