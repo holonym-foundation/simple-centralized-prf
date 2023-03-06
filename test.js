@@ -1,28 +1,31 @@
 const { expect, assert } = require("chai");
-const { createHmac } = require('crypto');
+const {  createHmac, createHash, randomBytes } = require('crypto');
 const request = require("supertest");
 const { server, msg, MAX_MSG } = require("./index");
-const ed = require('@noble/ed25519');
+// const ed = require('@noble/ed25519');
 const { rejects } = require("assert");
 
 describe("PRF Server", function() {
     before(async function() {
-        this.privKey = ed.utils.randomPrivateKey();
-        this.pubKey = await ed.getPublicKey(this.privKey); 
-        this.sig = await ed.sign(Buffer.from(msg), this.privKey);
-
+        // this.privKey = ed.utils.randomPrivateKey();
+        // this.pubKey = await ed.getPublicKey(this.privKey); 
+        // this.sig = await ed.sign(Buffer.from(msg), this.privKey);
+        this.preimage = randomBytes(32).toString('hex');
+        const hash = createHash('sha512'); 
+        hash.update(this.preimage); 
+        this.digest = hash.digest('hex');
         // Simulate the PRF
         const hmac = createHmac('sha512', process.env.HOLONYM_SECRET_HMAC); 
-        hmac.update(Buffer.from(this.pubKey).toString("hex")); 
-        this.shouldBe = (BigInt('0x'+hmac.digest('hex')) % MAX_MSG).toString();
+        hmac.update(this.digest); 
+        this.shouldBe = (BigInt('0x'+hmac.digest('hex')) % MAX_MSG).toString(16);
     });
     after(async function(){
         // process.exit(0);
     })
     it("correct signature returns prf", async function(){
         const r = await request(server).post('/').send({
-            pubkey: Buffer.from(this.pubKey).toString('hex'),//.replace('5','6'),
-            sig: Buffer.from(this.sig).toString('hex')
+            preimage: this.preimage,
+            digest: this.digest,//.replace('5','6'),
         });
 
         expect(r.body.prf).to.eq(this.shouldBe);
@@ -30,8 +33,8 @@ describe("PRF Server", function() {
 
     it("incorrect signature fails", async function(){
         const r = request(server).post('/').send({
-            pubkey: Buffer.from(this.pubKey).toString('hex').replace('5','6'),
-            sig: Buffer.from(this.sig).toString('hex')
+            preimage: this.preimage,
+            digest: this.digest.replace('5','6'),
         });
 
        await rejects(r);
@@ -39,7 +42,7 @@ describe("PRF Server", function() {
 
     it("Authority can get PRF of any seed", async function(){
         const r = await request(server).post('/authority').send({
-            input: Buffer.from(this.pubKey).toString('hex'),
+            input: this.digest,
             API_KEY: process.env.API_KEY
         });
         
@@ -48,8 +51,8 @@ describe("PRF Server", function() {
 
     it("Authority route doesn't work with bad API key", async function(){
         const r = request(server).post('/authority').send({
-            pubkey: Buffer.from(this.pubKey).toString('hex'),
-            sig: Buffer.from(this.sig).toString('hex')
+            input: Buffer.from(this.digest).toString('hex'),
+            API_KEY: process.env.API_KEY + "69"
         });
         await rejects(r);
     });
