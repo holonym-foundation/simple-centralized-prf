@@ -20,7 +20,7 @@ describe("PRF Server", function() {
         this.shouldBe = (BigInt('0x'+hmac.digest('hex')) % MAX_MSG).toString(16);
     });
     after(async function(){
-        process.exit(0);
+        // process.exit(0);
     })
     it("correct signature returns prf", async function(){
         const r = await request(server).post('/').send({

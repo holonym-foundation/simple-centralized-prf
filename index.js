@@ -33,6 +33,7 @@ const authorizedPRF = async (preimage, digest) => {
             prfSeed: digest,
             prf: p,
             boundToSeed: commit.toString(16),
+            sig: sign(process.env.HOLONYM_SECRET_EDDSA, commit.toString())
         }
     } else {
         throw 'Error verifying knowledge of preimage';
