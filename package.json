@@ -23,7 +23,7 @@
     "circomlibjs-old": "npm:circomlibjs@^0.0.8",
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
-    "holonym-wasm-issuer": "^0.3.1"
+    "holonym-wasm-issuer": "^0.4.0"
   },
   "devDependencies": {
     "chai": "^4.3.7",

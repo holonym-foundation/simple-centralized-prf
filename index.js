@@ -2,7 +2,7 @@ const {  createHmac, createHash } = require('crypto');
 // const ed = require('@noble/ed25519');
 const express = require('express');
 const bodyParser = require('body-parser');
-const { sign } = require('holonym-wasm-issuer');
+const { sign, getPubkey, getPubkeyTimes8 } = require('holonym-wasm-issuer');
 const { poseidon } = require('circomlibjs-old'); //The new version gives wrong outputs of Poseidon hash that disagree with ZoKrates and are too big for the max scalar in the field
 require('dotenv').config();
 
@@ -63,6 +63,15 @@ app.post('/authority', async (req, res) => {
     } else {
         res.status(401);
     }
+})
+
+app.get('/pubkey', async (req, res) => {
+    res.send({
+        pubKey: getPubkey(process.env.HOLONYM_SECRET_EDDSA),
+        pubKeyInSubgroup: getPubkeyTimes8(process.env.HOLONYM_SECRET_EDDSA)
+    });
+    // res.setTimeout(1500);
+    
 })
 
 app.listen(port, () => {})

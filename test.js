@@ -10,7 +10,7 @@ describe("PRF Server", function() {
         // this.privKey = ed.utils.randomPrivateKey();
         // this.pubKey = await ed.getPublicKey(this.privKey); 
         // this.sig = await ed.sign(Buffer.from(msg), this.privKey);
-        this.preimage = randomBytes(32).toString('hex');
+        this.preimage = randomBytes(64).toString('hex');
         const hash = createHash('sha512'); 
         hash.update(this.preimage); 
         this.digest = hash.digest('hex');
