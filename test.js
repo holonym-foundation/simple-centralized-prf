@@ -1,7 +1,7 @@
 const { expect, assert } = require("chai");
 const {  createHmac, createHash, randomBytes } = require('crypto');
 const request = require("supertest");
-const { server, msg, MAX_MSG } = require("./index");
+const { server, msg, MAX_MSG, ORDER_r } = require("./index");
 // const ed = require('@noble/ed25519');
 const { rejects } = require("assert");
 
@@ -14,10 +14,11 @@ describe("PRF Server", function() {
         const hash = createHash('sha512'); 
         hash.update(this.preimage); 
         this.digest = hash.digest('hex');
+        this.digestFr = (BigInt('0x'+this.digest) % ORDER_r)
         // Simulate the PRF
         const hmac = createHmac('sha512', process.env.HOLONYM_SECRET_HMAC); 
-        hmac.update(this.digest); 
-        this.shouldBe = (BigInt('0x'+hmac.digest('hex')) % MAX_MSG).toString(16);
+        hmac.update(this.digestFr.toString(16)); 
+        this.shouldBe = (BigInt('0x'+hmac.digest('hex')) % MAX_MSG).toString();
     });
     after(async function(){
         // process.exit(0);
@@ -25,7 +26,7 @@ describe("PRF Server", function() {
     it("correct signature returns prf", async function(){
         const r = await request(server).post('/').send({
             preimage: this.preimage,
-            digest: this.digest,//.replace('5','6'),
+            digestFr: this.digestFr.toString(),//.replace('5','6'),
         });
 
         expect(r.body.prf).to.eq(this.shouldBe);
@@ -34,7 +35,7 @@ describe("PRF Server", function() {
     it("incorrect signature fails", async function(){
         const r = request(server).post('/').send({
             preimage: this.preimage,
-            digest: this.digest.replace('5','6'),
+            digestFr: this.digestFr.toString().replace('5','6'),
         });
 
        await rejects(r);
@@ -42,7 +43,7 @@ describe("PRF Server", function() {
 
     it("Authority can get PRF of any seed", async function(){
         const r = await request(server).post('/authority').send({
-            input: this.digest,
+            input: this.digestFr.toString(),
             API_KEY: process.env.API_KEY
         });
         

@@ -4,6 +4,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const { sign, getPubkey, getPubkeyTimes8 } = require('holonym-wasm-issuer');
 const { poseidon } = require('circomlibjs-old'); //The new version gives wrong outputs of Poseidon hash that disagree with ZoKrates and are too big for the max scalar in the field
+const assert = require('assert');
 require('dotenv').config();
 
 const app = express();
@@ -16,26 +17,30 @@ const ORDER_n = 2188824287183927522224640574525727508861451177726853807360172528
 const SUBORDER = ORDER_n >> 3n; // Order of prime subgroup
 const MAX_MSG = ORDER_n >> 10n; //Use 10 bits for Koblitz encoding
 
+// convert big hex strings to big dec strings:
+const dec = hex => BigInt('0x'+hex).toString();
+
+/* prf input must be < order r because it will be given as input to the circuit. prf output also must be within Fr,
+ * so it can be used within the circuit. but it also must be < MAX_KSG becuase it will be used to make a message-sized
+ * pseudorandom point, to be added to the message.
+ */
 const _prf = input => {
+    assert((typeof input === 'bigint') && (input < ORDER_r), `input must be a BigInt less than the bn254 prime ${ORDER_r}`);
     const hmac = createHmac('sha512', process.env.HOLONYM_SECRET_HMAC);
-    hmac.update(input); 
-    console.log("PRF OF ", input)
-    // console.log((BigInt('0x'+hmac.digest('hex')) % MAX_MSG).toString());
-    return (BigInt('0x'+hmac.digest('hex')) % MAX_MSG).toString(16);
+    hmac.update(input.toString(16)); 
+    return BigInt('0x'+hmac.digest('hex')) % MAX_MSG;
 }
 
-// Signs the ephemeral "pubkey" given as prfSeed, and signature is used as easy-to-code proof of knowledge of preimage
-const authorizedPRF = async (preimage, digest) => {
-    console.log("getting prf of ", digest)
-
-    if(_verify(preimage,digest)) {
-        let p = _prf(digest);
-        const commit = poseidon([digest, p].map(x=>BigInt('0x'+x).toString()));
-        console.log([commit, 'is the commitment to', [digest, p].map(x=>BigInt('0x'+x).toString()).join('\n')].join('\n'))
+// Signs the authenticated (i.e. preimage is known) digest and gives the PRF + signature that this is the PRF result
+const authenticatedPRF = async (preimage, digestFr) => {
+    if(_verify(preimage,digestFr)) {
+        let p = _prf(BigInt(digestFr));
+        const commit = poseidon([BigInt(digestFr), p].map(i=>i.toString()));
+        console.log(commit, 'is the commitment to', digestFr, p);
         return {
-            prfSeed: digest,
-            prf: p,
-            boundToSeed: commit.toString(16),
+            prfSeed: digestFr.toString(),
+            prf: p.toString(),
+            boundToSeed: commit.toString(),
             sig: sign(process.env.HOLONYM_SECRET_EDDSA, commit.toString())
         }
     } else {
@@ -44,10 +49,10 @@ const authorizedPRF = async (preimage, digest) => {
 }
 
 // Verifies a person knows the preimage of the digest
-const _verify = (preimage, digest) => {
+const _verify = (preimage, digestFr) => {
     const hash = createHash('sha512');
     hash.update(preimage); 
-    return digest === hash.digest('hex');
+    return BigInt(digestFr) === BigInt('0x'+hash.digest('hex')) % ORDER_r;
 }
 
 
@@ -55,14 +60,14 @@ const _verify = (preimage, digest) => {
 
 app.post('/', async (req, res) => {
     res.setTimeout(1500);
-
-    res.send(await authorizedPRF(req.body.preimage, req.body.digest));
+    res.send(await authenticatedPRF(req.body.preimage, req.body.digestFr));
 })
 
 app.post('/authority', async (req, res) => {
     res.setTimeout(1500);
     if(req.body.API_KEY == process.env.API_KEY) {
-        res.send(_prf(req.body.input));
+        const p = _prf(BigInt(req.body.input));
+        res.send(p.toString());
     } else {
         res.status(401);
     }
@@ -81,4 +86,8 @@ app.listen(port, () => {})
 module.exports = {
     server: app,
     MAX_MSG: MAX_MSG, 
+    ORDER_r: ORDER_r,
+    ORDER_n: ORDER_n,
+    SUBORDER: SUBORDER,
+    MAX_MSG: MAX_MSG,
 }
