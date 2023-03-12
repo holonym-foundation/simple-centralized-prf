@@ -9,10 +9,12 @@ require('dotenv').config();
 const app = express();
 app.use(bodyParser.json());
 const port = 3000;
-const msg = 'DO NOT SIGN THIS UNLESS YOU ARE ON https://holonym.id';
-const ORDER = 21888242871839275222246405745257275088614511777268538073601725287587578984328n;
-// const SUBGROUP_ORDER = 2736030358979909402780800718157159386076813972158567259200215660948447373041n;
-const MAX_MSG = ORDER >> 10n; //Use 10 bits for Koblitz encoding
+
+const ORDER_r = 21888242871839275222246405745257275088548364400416034343698204186575808495617n;
+const ORDER_n = 21888242871839275222246405745257275088614511777268538073601725287587578984328n;
+
+const SUBORDER = ORDER_n >> 3n; // Order of prime subgroup
+const MAX_MSG = ORDER_n >> 10n; //Use 10 bits for Koblitz encoding
 
 const _prf = input => {
     const hmac = createHmac('sha512', process.env.HOLONYM_SECRET_HMAC);
@@ -29,7 +31,7 @@ const authorizedPRF = async (preimage, digest) => {
     if(_verify(preimage,digest)) {
         let p = _prf(digest);
         const commit = poseidon([digest, p].map(x=>BigInt('0x'+x).toString()));
-        console.log([commit, 'is the commitment to', digest, 'and', p].join('\n'))
+        console.log([commit, 'is the commitment to', [digest, p].map(x=>BigInt('0x'+x).toString()).join('\n')].join('\n'))
         return {
             prfSeed: digest,
             prf: p,
@@ -78,6 +80,5 @@ app.get('/pubkey', async (req, res) => {
 app.listen(port, () => {})
 module.exports = {
     server: app,
-    msg: msg,
     MAX_MSG: MAX_MSG, 
 }
