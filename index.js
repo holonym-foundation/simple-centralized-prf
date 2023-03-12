@@ -29,6 +29,7 @@ const authorizedPRF = async (preimage, digest) => {
     if(_verify(preimage,digest)) {
         let p = _prf(digest);
         const commit = poseidon([digest, p].map(x=>BigInt('0x'+x).toString()));
+        console.log([commit, 'is the commitment to', digest, 'and', p].join('\n'))
         return {
             prfSeed: digest,
             prf: p,
