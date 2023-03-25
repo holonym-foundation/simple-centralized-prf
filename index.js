@@ -66,7 +66,7 @@ app.post('/', async (req, res) => {
 app.post('/authority', async (req, res) => {
     res.setTimeout(1500);
     if(req.body.API_KEY == process.env.API_KEY) {
-        const p = _prf(BigInt(req.body.input));
+        const p = _prf(BigInt(req.body.prfIn));
         res.send(p.toString());
     } else {
         res.status(401);

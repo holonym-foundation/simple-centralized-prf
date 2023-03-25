@@ -43,7 +43,7 @@ describe("PRF Server", function() {
 
     it("Authority can get PRF of any seed", async function(){
         const r = await request(server).post('/authority').send({
-            input: this.digestFr.toString(),
+            prfIn: this.digestFr.toString(),
             API_KEY: process.env.API_KEY
         });
         
