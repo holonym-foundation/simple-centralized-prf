@@ -29,7 +29,7 @@ describe("PRF Server", function() {
             digestFr: this.digestFr.toString(),//.replace('5','6'),
         });
 
-        expect(r.body.prf).to.eq(this.shouldBe);
+        expect(r.body.prfOut).to.eq(this.shouldBe);
     });
 
     it("incorrect signature fails", async function(){

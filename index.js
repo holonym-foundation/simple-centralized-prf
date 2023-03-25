@@ -38,13 +38,13 @@ const authenticatedPRF = async (preimage, digestFr) => {
         const commit = poseidon([BigInt(digestFr), p].map(i=>i.toString()));
         console.log(commit, 'is the commitment to', digestFr, p);
         return {
-            prfSeed: digestFr.toString(),
-            prf: p.toString(),
-            boundToSeed: commit.toString(),
+            prfIn: digestFr.toString(),
+            prfOut: p.toString(),
+            bound: commit.toString(),
             sig: sign(process.env.HOLONYM_SECRET_EDDSA, commit.toString())
         }
     } else {
-        throw 'Error verifying knowledge of preimage';
+        throw 'Error verifying knowled`ge of preimage';
     }
 }
 
